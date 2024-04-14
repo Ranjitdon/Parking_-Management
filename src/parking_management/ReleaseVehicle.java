@@ -9,6 +9,8 @@ import javax.swing.JOptionPane;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+
 public class ReleaseVehicle extends javax.swing.JFrame {
 
     private static final String DB_URL = "jdbc:oracle:thin:@localhost:1521:xe";
@@ -20,6 +22,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
     private Connection conn = null;
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
+    LocalDateTime release = LocalDateTime.now();
     public ReleaseVehicle() {
         initComponents();
     }
@@ -58,10 +61,11 @@ public class ReleaseVehicle extends javax.swing.JFrame {
         jLabel11 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        paymentType = new javax.swing.JComboBox<>();
         releaseButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setPreferredSize(new java.awt.Dimension(800, 500));
@@ -177,7 +181,12 @@ public class ReleaseVehicle extends javax.swing.JFrame {
 
         jLabel13.setText("Payment Method");
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CASH", "UPI", "CARD", " " }));
+        paymentType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CASH", "UPI", "CARD", " " }));
+        paymentType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                paymentTypeActionPerformed(evt);
+            }
+        });
 
         releaseButton.setBackground(new java.awt.Color(0, 102, 102));
         releaseButton.setForeground(new java.awt.Color(255, 255, 255));
@@ -206,7 +215,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
                             .addComponent(jLabel2)
                             .addComponent(jLabel11)
                             .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(paymentType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(46, 46, 46)
                                 .addComponent(releaseButton))
                             .addComponent(name)
@@ -267,7 +276,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(paymentType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(releaseButton)))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jLabel7)
@@ -377,6 +386,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
 
     private void releaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_releaseButtonActionPerformed
         String vehicleNoValue = vehicleNo.getText();
+        String paymentMethod = (String) paymentType.getSelectedItem();
 
     try {
         Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -394,35 +404,40 @@ public class ReleaseVehicle extends javax.swing.JFrame {
             int durationValue = rs.getInt("duration");
             String vehicleType = rs.getString("vehicleType");
             String slotNumber = rs.getString("slot_no");
+            String user = rs.getString("name");
 
             // Calculate release time and extra time
             LocalDateTime time = parkingTimestamp.toLocalDateTime();
-            LocalDateTime release = LocalDateTime.now();
+ 
             Duration difference = Duration.between(time, release);
             long extraHours = difference.toHours() - durationValue;
 
             // Calculate total payable amount and extra charge
             getCharge(vehicleType);
             double extraCharge = extraHours > 0 ? extraHours * extra : 0.0;
-            double totalAmountValue = chargeValue*durationValue + extraCharge;
+            double totalAmountValue = chargeValue * durationValue + extraCharge;
 
             // Update history table
-            String insertHistoryQuery = "INSERT INTO history (vehicle_no, vehicleType, phone_no, parking_date, parking_time, release_time, amount_paid) VALUES (?, ?, ?, SYSDATE, ?, ?, ?)";
+            String insertHistoryQuery = "INSERT INTO history (vehicle_no, vehicleType, phone_no, parking_date, parking_time, release_time, amount_paid, paymentMethod, name) VALUES (?, ?, ?, SYSDATE, ?, ?, ?, ?, ?)";
             PreparedStatement insertPstmt = conn.prepareStatement(insertHistoryQuery);
             insertPstmt.setString(1, vehicleNoValue);
             insertPstmt.setString(2, vehicleType);
             insertPstmt.setLong(3, rs.getLong("phone_no")); // Assuming phone_no is stored in the reservation table
             insertPstmt.setTimestamp(4, parkingTimestamp);
-            insertPstmt.setTimestamp(5, Timestamp.valueOf(release));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            insertPstmt.setString(5, release.format(formatter));
             insertPstmt.setDouble(6, totalAmountValue);
+            
+            // Retrieve the payment method from the JComboBox
+            
+            insertPstmt.setString(7, paymentMethod);
+            insertPstmt.setString(8, user);
+
             insertPstmt.executeUpdate();
 
             // Update slot status based on vehicle type
             String slotsTable = (vehicleType.equals("2 wheeler")) ? "slots_2wheeler" : "slots_4wheeler";
-            System.out.println();
-            String updateSlotQuery = "UPDATE "+slotsTable+" SET status = 'available' WHERE slot_no = ?";
-            System.out.println();
-           
+            String updateSlotQuery = "UPDATE " + slotsTable + " SET status = 'available' WHERE slot_no = ?";
             PreparedStatement updatePstmt = conn.prepareStatement(updateSlotQuery);
             updatePstmt.setString(1, slotNumber);
             updatePstmt.executeUpdate();
@@ -449,7 +464,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
 
     private void getDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_getDataActionPerformed
         // TODO add your handling code here:
-         String vehicleNoValue = vehicleNo.getText();
+        String vehicleNoValue = vehicleNo.getText();
 
     try {
         Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -475,19 +490,19 @@ public class ReleaseVehicle extends javax.swing.JFrame {
 
             // Calculate release time
             LocalDateTime time = parkingTimestamp.toLocalDateTime();
-            LocalDateTime release = LocalDateTime.now();
+            LocalDateTime releaseTm = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
             parkingTime.setText(time.format(formatter));
             parkingTime.setEditable(false);
             
-            releaseTime.setText(release.format(formatter));
+            releaseTime.setText(releaseTm.format(formatter));
             releaseTime.setEditable(false);
             
             duration.setText(String.valueOf(durationValue));
             duration.setEditable(false);
 
             // Calculate extra time
-            Duration difference = Duration.between(time, release);
+            Duration difference = Duration.between(time, releaseTm);
             long extraHours = difference.toHours() - durationValue;
             if(extraHours>0){
                 extraTime.setText(Long.toString(extraHours));
@@ -514,6 +529,20 @@ public class ReleaseVehicle extends javax.swing.JFrame {
     }
         
     }//GEN-LAST:event_getDataActionPerformed
+
+    private void paymentTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paymentTypeActionPerformed
+        String paymentMethod = (String) paymentType.getSelectedItem();
+        String vehicleNoValue = vehicleNo.getText();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        System.out.println(release.format(formatter));
+        if(paymentMethod.equals("UPI")){
+            UPIPayment newPage = new UPIPayment(vehicleNoValue, release.format(formatter));
+            newPage.setVisible(true);
+            newPage.pack();
+            newPage.setLocationRelativeTo(null);
+        }
+        
+    }//GEN-LAST:event_paymentTypeActionPerformed
 
     /**
      * @param args the command line arguments
@@ -586,7 +615,6 @@ public class ReleaseVehicle extends javax.swing.JFrame {
     private javax.swing.JTextField duration;
     private javax.swing.JTextField extraTime;
     private javax.swing.JButton getData;
-    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -604,6 +632,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
     private javax.swing.JButton logoutButton;
     private javax.swing.JTextField name;
     private javax.swing.JTextField parkingTime;
+    private javax.swing.JComboBox<String> paymentType;
     private javax.swing.JTextField phone;
     private javax.swing.JButton releaseButton;
     private javax.swing.JTextField releaseTime;

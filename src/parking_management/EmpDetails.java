@@ -352,24 +352,8 @@ private void setFalse() {
     // Reset gender radio buttons
     
 }
-    //Hash Function
-    private String hashPassword(String input){
-        try{
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = md.digest(input.getBytes());
-
-            // Convert byte array to hexadecimal string
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        }
-        catch(NoSuchAlgorithmException e){
-            System.out.println(e.getMessage());
-        }
-        return "";
-    }
+   
+   
     private void phoneNoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_phoneNoActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_phoneNoActionPerformed

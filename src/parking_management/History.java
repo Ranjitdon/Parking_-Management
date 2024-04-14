@@ -6,6 +6,7 @@ package parking_management;
 import java.text.SimpleDateFormat;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +20,7 @@ public class History extends javax.swing.JFrame {
     private Connection conn = null;
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
+   
     public History() {
         initComponents();
     }
@@ -46,6 +48,7 @@ public class History extends javax.swing.JFrame {
         slotsTable = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -157,6 +160,11 @@ public class History extends javax.swing.JFrame {
                 slotsTableMouseWheelMoved(evt);
             }
         });
+        slotsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                slotsTableMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(slotsTable);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -247,7 +255,7 @@ public class History extends javax.swing.JFrame {
                     row[1] = rs.getLong("phone_no"); // Use getLong for NUMBER(10)
                     row[2] = rs.getDate("parking_date");
                     row[3] = rs.getTimestamp("parking_time").toLocalDateTime().format(formatter); // Convert TIMESTAMP to LocalDateTime
-                    row[4] = rs.getTimestamp("release_time").toLocalDateTime().format(formatter); // Convert TIMESTAMP to LocalDateTime
+                    row[4] = rs.getString("release_time"); // Convert TIMESTAMP to LocalDateTime
                     row[5] = rs.getDouble("amount_paid"); // Use getDouble for NUMBER(10)
                     model.addRow(row);
                 }
@@ -301,6 +309,18 @@ public class History extends javax.swing.JFrame {
     private void sliderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sliderActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_sliderActionPerformed
+
+    private void slotsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_slotsTableMouseClicked
+        int selectedRow = slotsTable.getSelectedRow();
+        // Get the value of the Apartment ID from the selected row
+        String vehicleNo = slotsTable.getValueAt(selectedRow, 0).toString();
+        String release = slotsTable.getValueAt(selectedRow, 4).toString();
+        System.out.println(vehicleNo);
+        HistoryDetails historyDetails = new HistoryDetails(vehicleNo, release);
+        historyDetails.setVisible(true);
+        historyDetails.pack();
+        historyDetails.setLocationRelativeTo(null);
+    }//GEN-LAST:event_slotsTableMouseClicked
 
     /**
      * @param args the command line arguments
