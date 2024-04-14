@@ -177,7 +177,7 @@ public class ReleaseVehicle extends javax.swing.JFrame {
 
         jLabel13.setText("Payment Method");
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "UPI", "CASH", "CARD", " " }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CASH", "UPI", "CARD", " " }));
 
         releaseButton.setBackground(new java.awt.Color(0, 102, 102));
         releaseButton.setForeground(new java.awt.Color(255, 255, 255));

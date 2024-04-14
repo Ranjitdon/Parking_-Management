@@ -11,10 +11,7 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.text.SimpleDateFormat;
 
-/**
- *
- * @author Abisesh mishra
- */
+
 public class AddEmployee extends javax.swing.JFrame {
 
     private static final String DB_URL = "jdbc:oracle:thin:@localhost:1521:xe";
@@ -579,7 +576,7 @@ public class AddEmployee extends javax.swing.JFrame {
     String dob = formatDate(DOB.getDate()); // Format date of birth
     String dateOfJoining = formatDate(joiningDate.getDate()); // Format date of joining
     String employeeGender = (male.isSelected()) ? "Male" : "Female"; // Assuming male or female radio buttons
-    
+    System.out.println(DOB.getDate()+" "+dob);
     if (pass.equals(verifyPass)) {
         pass = hashPassword(pass);
         try {

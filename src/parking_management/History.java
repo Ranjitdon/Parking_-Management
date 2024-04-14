@@ -224,13 +224,13 @@ public class History extends javax.swing.JFrame {
     
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM history WHERE vehicleType = ?");
+             conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             pstmt = conn.prepareStatement("SELECT * FROM history WHERE vehicleType = ?");
 
             
             pstmt.setString(1, slider.getSelectedItem().toString());
 
-               ResultSet rs = pstmt.executeQuery(); 
+                rs = pstmt.executeQuery(); 
                 DefaultTableModel model = new DefaultTableModel();
                 model.addColumn("Vehicle no.");
                 model.addColumn("Phone no.");
@@ -242,19 +242,18 @@ public class History extends javax.swing.JFrame {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
                 while (rs.next()) {
-    Object[] row = new Object[6];
-    row[0] = rs.getString("vehicle_no");
-    row[1] = rs.getLong("phone_no"); // Use getLong for NUMBER(10)
-    row[2] = rs.getDate("parking_date");
-    row[3] = rs.getTimestamp("parking_time").toLocalDateTime().format(formatter); // Convert TIMESTAMP to LocalDateTime
-    row[4] = rs.getTimestamp("release_time").toLocalDateTime().format(formatter); // Convert TIMESTAMP to LocalDateTime
-    row[5] = rs.getDouble("amount_paid"); // Use getDouble for NUMBER(10)
-    model.addRow(row);
-}
+                    Object[] row = new Object[6];
+                    row[0] = rs.getString("vehicle_no");
+                    row[1] = rs.getLong("phone_no"); // Use getLong for NUMBER(10)
+                    row[2] = rs.getDate("parking_date");
+                    row[3] = rs.getTimestamp("parking_time").toLocalDateTime().format(formatter); // Convert TIMESTAMP to LocalDateTime
+                    row[4] = rs.getTimestamp("release_time").toLocalDateTime().format(formatter); // Convert TIMESTAMP to LocalDateTime
+                    row[5] = rs.getDouble("amount_paid"); // Use getDouble for NUMBER(10)
+                    model.addRow(row);
+                }
 
 
                 slotsTable.setModel(model);
-            ;
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error fetching data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace(); // Log the SQL exception for debugging
